@@ -1,0 +1,302 @@
+// nikah-api/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ══════════════════════════════════════════════
+// ENUMS
+// ══════════════════════════════════════════════
+
+enum Role {
+  PRESIDENT
+  SUPERVISOR
+  GUARDIAN
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AccountStatus {
+  INACTIVE       
+  PENDING_REVIEW 
+  ACTIVE         
+  SUSPENDED      
+  BANNED         
+}
+
+enum MatchRequestStatus {
+  PENDING    
+  APPROVED   
+  REJECTED   
+  CANCELLED  
+}
+
+enum GroupStatus {
+  PENDING    
+  ACTIVE     
+  CLOSED     
+}
+
+enum NotificationType {
+  MATCH_REQUEST
+  MATCH_APPROVED
+  MATCH_REJECTED
+  PAYMENT_APPROVED
+  ID_VERIFIED
+  GROUP_ACTIVATED
+  SYSTEM
+}
+
+enum EducationLevel {
+  NONE
+  PRIMARY
+  SECONDARY
+  DIPLOMA
+  BACHELOR
+  MASTER
+  PHD
+}
+
+enum FinancialLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+enum MaritalStatus {
+  SINGLE
+  DIVORCED
+  WIDOWED
+}
+
+// ══════════════════════════════════════════════
+// CORE TABLES
+// ══════════════════════════════════════════════
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  phone         String        @unique
+  passwordHash  String
+  role          Role          @default(USER)
+  gender        Gender
+  accountStatus AccountStatus @default(INACTIVE)
+  lastSeen      DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  profile       Profile?
+  idDocument    IdDocument?
+  paymentProofs PaymentProof[]
+
+  // طلبات المطابقة
+  sentRequests     MatchRequest[] @relation("SenderRequests")
+  receivedRequests MatchRequest[] @relation("ReceiverRequests")
+
+  // المجموعات والرسائل
+  groupMemberships GroupMember[]
+  messages         Message[]
+  
+  // الإشراف على المستخدمين
+  supervisorId    String?
+  supervisor      User?   @relation("SupervisorUsers", fields: [supervisorId], references: [id])
+  supervisedUsers User[]  @relation("SupervisorUsers")
+
+  // الإشراف على المجموعات
+  supervisedGroups Group[] @relation("SupervisorToGroups")
+
+  // الولي (للإناث)
+  guardianId String?
+  guardian   Guardian? @relation(fields: [guardianId], references: [id])
+
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Profile {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName       String
+  dateOfBirth    DateTime
+  state          String         
+  city           String         
+  nationality    String         @default("سوداني")
+  tribe          String?        
+
+  educationLevel EducationLevel
+  occupation     String?
+  financialLevel FinancialLevel
+
+  maritalStatus  MaritalStatus
+  hasChildren    Boolean        @default(false)
+  childrenCount  Int            @default(0)
+  acceptsPolygamy Boolean?      
+
+  bio            String?
+  requirements   String?        
+
+  photoUrl       String?
+  showPhoto      Boolean        @default(false) 
+
+  updatedAt      DateTime       @updatedAt
+
+  @@map("profiles")
+}
+
+model Guardian {
+  id           String   @id @default(uuid())
+  fullName     String
+  phone        String   @unique
+  relation     String   
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  ward          User[]
+  matchRequests MatchRequest[]
+
+  @@map("guardians")
+}
+
+// ══════════════════════════════════════════════
+// VERIFICATION
+// ══════════════════════════════════════════════
+
+model IdDocument {
+  id         String             @id @default(uuid())
+  userId     String             @unique
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileUrl    String
+  status     VerificationStatus @default(PENDING)
+  reviewedBy String?            
+  reviewNote String?
+  submittedAt DateTime          @default(now())
+  reviewedAt  DateTime?
+
+  @@map("id_documents")
+}
+
+model PaymentProof {
+  id          String             @id @default(uuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileUrl     String
+  amount      Float
+  status      VerificationStatus @default(PENDING)
+  reviewedBy  String?
+  reviewNote  String?
+  submittedAt DateTime           @default(now())
+  reviewedAt  DateTime?
+
+  @@map("payment_proofs")
+}
+
+// ══════════════════════════════════════════════
+// MATCHING & CHAT
+// ══════════════════════════════════════════════
+
+model MatchRequest {
+  id          String             @id @default(uuid())
+  senderId    String
+  sender      User               @relation("SenderRequests", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User               @relation("ReceiverRequests", fields: [receiverId], references: [id])
+
+  guardianId  String?
+  guardian    Guardian?          @relation(fields: [guardianId], references: [id])
+
+  status      MatchRequestStatus @default(PENDING)
+  message     String?            
+  compatibilityScore Int         
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  group       Group?
+
+  @@unique([senderId, receiverId])
+  @@map("match_requests")
+}
+
+model Group {
+  id             String      @id @default(uuid())
+  matchRequestId String      @unique
+  matchRequest   MatchRequest @relation(fields: [matchRequestId], references: [id])
+
+  name           String
+  status         GroupStatus @default(PENDING)
+
+  // المشرف المسؤول عن إدارة الحوار
+  supervisorId   String
+  supervisor     User        @relation("SupervisorToGroups", fields: [supervisorId], references: [id])
+
+  createdAt      DateTime    @default(now())
+  activatedAt    DateTime?
+  closedAt       DateTime?
+
+  members        GroupMember[]
+  messages       Message[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String @id @default(uuid())
+  groupId  String
+  group    Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+
+// ══════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  metadata  Json?            
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
