@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Online Marriage Platform API - Sudan & Arab World",
   "main": "dist/server.js",
- 
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
@@ -29,9 +28,7 @@
     "multer": "^1.4.5-lts.1",
     "socket.io": "^4.7.4",
     "uuid": "^9.0.1",
-    "winston": "^3.13.0"
-  },
-  "devDependencies": {
+    "winston": "^3.13.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
@@ -40,10 +37,11 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.11.30",
     "@types/uuid": "^9.0.8",
-    "prisma": "^5.10.0",
     "ts-node-dev": "^2.0.0",
+    "prisma": "^5.10.0",
     "typescript": "^5.4.2"
   },
+  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"

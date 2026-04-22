@@ -62,7 +62,7 @@ export async function register(dto: RegisterDto) {
           city: dto.city,
           educationLevel: dto.educationLevel as any,
           financialLevel: dto.financialLevel as any,
-          maritalStatus: dto.maritalStatus,
+          maritalStatus: dto.maritalStatus as any,
           occupation: dto.occupation,
           nationality: 'سوداني',
         },
