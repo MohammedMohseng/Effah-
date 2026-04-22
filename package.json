@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Online Marriage Platform API - Sudan & Arab World",
   "main": "dist/server.js",
+ 
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "ES2020"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
