@@ -53,11 +53,10 @@ router.get('/users', authenticate, requireSupervisor,
         prisma.user.findMany({
           where,
           include: { profile: true, idDocument: true },
-          omit: { passwordHash: true },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { createdAt: 'desc' },
-        }),
+        }).then(users => users.map(({ passwordHash, ...u }) => u)),
         prisma.user.count({ where }),
       ]);
 
@@ -111,7 +110,7 @@ router.post('/supervisors', authenticate, requirePresident,
           }},
         },
         include: { profile: true },
-        omit: { passwordHash: true },
+
       });
 
       res.status(201).json({ success: true, message: 'تم إنشاء حساب المشرف', data: supervisor });

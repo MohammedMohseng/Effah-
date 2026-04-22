@@ -30,11 +30,9 @@ const MessageSchema = new Schema<IMessage>(
     isDeleted:  { type: Boolean, default: false },
     deletedAt:  { type: Date },
   },
-  {
-    timestamps: true,
-    // فهرس مركّب للاستعلام السريع عن رسائل مجموعة مرتّبة بالوقت
-    indexes: [{ groupId: 1, createdAt: -1 }],
-  }
+  { timestamps: true }
 );
+
+MessageSchema.index({ groupId: 1, createdAt: -1 });
 
 export const Message = mongoose.model<IMessage>('Message', MessageSchema);

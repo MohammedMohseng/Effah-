@@ -40,11 +40,11 @@ export async function changePassword(req: AuthRequest, res: Response, next: Next
 export async function me(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const { prisma } = await import('../../config/database');
-    const user = await prisma.user.findUnique({
+    const userRaw = await prisma.user.findUnique({
       where: { id: req.user!.userId },
       include: { profile: true },
-      omit: { passwordHash: true },
     });
+    const user = userRaw ? (({ passwordHash, ...rest }) => rest)(userRaw) : null;
     if (!user) { res.status(404).json({ success: false, message: 'المستخدم غير موجود' }); return; }
     res.json({ success: true, data: user });
   } catch (err) { next(err); }

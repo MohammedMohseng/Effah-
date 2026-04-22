@@ -100,8 +100,8 @@ export async function getUserGroups(userId: string) {
   return prisma.group.findMany({
     where: { members: { some: { userId } } },
     include: {
-      members: { include: { user: { include: { profile: true }, omit: { passwordHash: true } } } },
-      supervisor: { include: { profile: true }, omit: { passwordHash: true } },
+      members: { include: { user: { include: { profile: true } } } },
+      supervisor: { include: { profile: true } },
     },
     orderBy: { createdAt: 'desc' },
   });

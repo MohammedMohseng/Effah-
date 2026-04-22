@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# Effah-
-=======
 # nikah-api — Backend API
 
 منصة الزواج الإسلامية - خادم API مبني بـ Node.js + TypeScript
@@ -161,4 +158,3 @@ src/
 3. أضف خدمتي **PostgreSQL** و**MongoDB**
 4. أضف متغيرات البيئة من `.env.example`
 5. اضبط الأمر: `npm run build && npm start`
->>>>>>> 407785a (first one)
