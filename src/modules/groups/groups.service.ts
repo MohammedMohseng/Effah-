@@ -61,7 +61,7 @@ export async function guardianReview(
   const [updatedRequest, group] = await prisma.$transaction([
     prisma.matchRequest.update({
       where: { id: requestId },
-      data: { status: 'APPROVED', assignedSupervisorId: supervisorId },
+      data: { status: 'APPROVED' },
     }),
     prisma.group.create({
       data: {
